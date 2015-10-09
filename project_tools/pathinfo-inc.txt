@@ -1,0 +1,47 @@
+++++++++++++++++++++++++++
+++++++++++++++++++++++++++
+
+路由说明：
+
+1、框架支持传统的调用方式：/index.php?c=controller_name&a=action_name&other_params=...，c为调用的controller，a为调用的方法
+2、除了此种方式框架同时提供另外的两种方式:
+   1）一种为普通path-info的格式，调用方式如：/index.php/controller_name/action_name/param_key/param_value/...
+   2）另一种为自定义格式，类似rest风格，如：http://xxx/user
+   这两种方式都需要pathinfo的支持
+
+
+
+pathinfo支持说明：
+
+1、Apache：
+
+在配置文件中加入
+<Files *.php>
+AcceptPathInfo On
+</Files>
+
+2、Nginx：
+
+在配置文件里源代码的基础上添加以下代码
+location ~ .php
+{
+	fastcgi_pass 127.0.0.1:9000;
+	fastcgi_index index.php;
+
+	##
+	set $path_info “”;
+	set $real_script_name $fastcgi_script_name;
+	if ($fastcgi_script_name ~ “^(.+?\.php)(/.+)$”) {
+	set $real_script_name $1;
+	set $path_info $2;
+	##
+
+}
+
+##
+fastcgi_param SCRIPT_FILENAME /var/html/$real_script_name;
+fastcgi_param SCRIPT_NAME $real_script_name;
+fastcgi_param PATH_INFO $path_info;
+##
+
+}

@@ -1,0 +1,137 @@
+<?php
+defined('APP_PATH') or exit();
+defined('LIB_PATH') or exit();
+
+class Controller
+{
+    public $_smarty   = null;
+
+	public $vars = array();
+	private $file;
+
+    public function initSmarty()
+    {
+		$smarty_conf = Config::find("smarty");
+		if($smarty_conf['using'] == true)
+		{
+			include LIB_PATH.'/Templates/smarty/Smarty.class.php';
+			$this->_smarty = new Smarty();
+			$this->_smarty->compile_dir     = ROOT_PATH."/cache/templates_c/";
+			$this->_smarty->config_dir      = ROOT_PATH."/cache/configs/";
+			$this->_smarty->cache_dir       = ROOT_PATH."/cache/cache/";
+			$this->_smarty->template_dir    = APP_PATH.'/views/';
+			$this->_smarty->left_delimiter  = $smarty_conf['left'];
+			$this->_smarty->right_delimiter = $smarty_conf['right'];
+			$this->_smarty->force_compile   = false;
+			$this->_smarty->debugging  = $smarty_conf['debug'];
+		}
+    }
+
+	public function display($tpl=null)
+	{
+		$app = ROOT_PATH;
+		$this->assign("APP",$app);
+		$web = Object::find("Web");
+		$view_path = $web->view_path;
+		$view_name = $web->view_name;
+		$this->assign("URL",$app."/".$view_path);
+
+		$suffix = Config::find('TPL_SUFFIX');
+		if(empty($suffix)){
+			$suffix = 'html';
+		}
+
+		if(!empty($tpl)){
+			$tpl_path = $tpl.".".$suffix;
+		}else{
+			$tpl_path = "{$view_path}/{$view_name}.{$suffix}";
+		}
+		$_path = str_replace("\\","/",$this->_smarty->template_dir[0]).$tpl_path;
+		if(file_exists($_path)){
+			$this->_smarty->display($_path);
+		}else{
+			throw new QException(200);
+		}
+	}
+
+	public function assign($name,$value)
+	{
+		if(empty($name)){
+			return ;
+		}
+
+		$this->_smarty->assign($name,$value);
+	}
+
+	public function get($key)
+	{
+		if(!isset($_GET[$key])){
+			return ;
+		}
+		return htmlspecialchars(addslashes($_GET[$key]));
+	}
+
+	public function post($key)
+	{
+		if(!isset($_POST[$key])){
+			return ;
+		}
+		if(is_array($_POST[$key])){
+			foreach($_POST[$key] as $k=>&$v){
+				$v = htmlspecialchars(addslashes($v));
+			}
+			return $_POST[$key];
+		}else{
+			return htmlspecialchars(addslashes($_POST[$key]));
+		}
+	}
+
+	public function renderJson($res)
+	{
+		echo json_encode($res);
+	}
+
+	public function getController()
+	{
+		$web = Object::find("Web");
+		if(empty($web->_controller)){
+			$web->_controller=get_class($this);
+		}
+		return $web->_controller;
+	}
+
+	public function getAction()
+	{
+		$web = Object::find("Web");
+		return $web->_action;
+	}
+
+	public function dispatch($action)
+	{
+		$this->$action();
+	}
+
+
+
+}
+
+
+/**
+
+	public function assign2($key, $value)
+	{
+		$this->$key = $value;
+	}
+
+	public function display2($file)
+	{
+		$this->file = APP_PATH.'/views/'.$file.".php";
+
+		ob_start();
+		include $this->file;
+		$show = ob_get_contents();
+		ob_end_clean();
+		echo $show;
+	}
+
+*/

@@ -1,0 +1,19 @@
++++++++++++++++++++++++++++++
+
+rewrite使用：
+
+1、Apache：
+在/src/www/目录下建立.htaccess文件，内容为：
+<IfModule mod_rewrite.c>
+   RewriteEngine on
+   RewriteCond %{REQUEST_FILENAME} !-d
+   RewriteCond %{REQUEST_FILENAME} !-f
+   RewriteRule ^(.*)$ index.php/$1 [QSA,PT,L]
+</IfModule>
+
+
+2、Nginx：
+在nginx.conf中添加
+rewrite ^/(.*)$ /index.php/$1 last;
+
++++++++++++++++++++++++++++++
